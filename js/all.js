@@ -54,7 +54,7 @@ const cal = function () {
   
   // 運算子判斷
   this.arithmetic = ( operator ) => {
-    if (input.value === '非數值' || input.value === '∞' || input.value === '-∞') {
+    if (input.value === '非數值' || input.value === '∞' || input.value === '-∞' || input.value === '-') {
       displayOperator.textContent = operator
       input.value = ''
       return
@@ -172,7 +172,13 @@ const cal = function () {
         break
       case '+': vm.arithmetic('+')
         break
-      case '−': vm.arithmetic('−')
+      case '−': 
+        // 判斷是負數還是四則運算減號
+        if ( input.value === '' ) {
+          input.value = '-'
+        } else {
+          vm.arithmetic('−')
+        }
         break
       case '×': vm.arithmetic('×')
         break
@@ -224,7 +230,12 @@ const cal = function () {
         break
       case 'NumpadAdd': vm.arithmetic('+')
         break
-      case 'NumpadSubtract': vm.arithmetic('−')
+      case 'NumpadSubtract': 
+        if ( input.value === '' ) {
+          input.value = '-'
+        } else {
+          vm.arithmetic('−')
+        }
         break
       case 'NumpadMultiply': vm.arithmetic('×')
         break
