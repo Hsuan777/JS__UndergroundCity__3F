@@ -14,7 +14,8 @@ const cal = function () {
   // 結果計算
   // 1. 顯示欄為空，則顯示 0
   // 2. 若顯示欄為空且有運算符號
-  // 3. 將最後的數字加進去暫存陣列
+  // 3. 若顯示欄為 "非數值" 或 '∞' 則回到初始狀態
+  // 4. 將最後的數字加進去暫存陣列
   this.sum = () => {
     if ( input.value === '' && displayOperator.textContent === '@' ) {
       input.value = 0 
@@ -142,22 +143,30 @@ const cal = function () {
     }
   }
   
+  // Backspace判斷
+  this.backspace = () => {
+    if (input.value === '非數值' || input.value === '∞' || input.value === '-∞') {
+      input.value = ''
+      displayOperator.textContent = '@'
+    } else {
+      // 字串轉陣列
+      let str = Array.from(input.value).filter(item=> item != ',')
+      // pop() 會移除陣列最後一個元素並回傳該值
+      // 若直接串接會變成賦予值
+      str.pop()
+      // join() 將陣列轉字串，若傳入空值則接續
+      input.value = str.join('')
+      input.value = input.value.replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",")
+      vm.displayFontSize()
+    }
+  }
+
   // 按鈕判斷
   this.clickBtn = ( e ) => {
     switch ( e.toElement.value ) {
       case 'AC': vm.clean()
         break
-      case '⌫': 
-        if (input.value === '非數值' || input.value === '∞' || input.value === '-∞') {
-          input.value = ''
-          displayOperator.textContent = '@'
-        } else {
-          let str = Array.from(input.value).filter(item=> item != ',')
-          str.pop()
-          input.value = str.join('')
-          input.value = input.value.replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",")
-          vm.displayFontSize()
-        }
+      case '⌫': vm.backspace()
         break
       case '=': vm.sum()
         break
@@ -196,7 +205,10 @@ const cal = function () {
           vm.display('00')
         }
         break
-      case '.': vm.display('.')
+      case '.': 
+        if (Array.from(input.value).indexOf('.') === -1) {
+          vm.display('.') 
+        } 
         break
     }
   }
@@ -204,21 +216,7 @@ const cal = function () {
   // 按鍵判斷
   this.keydown = ( e ) => {
     switch ( e.code ){
-      case 'Backspace':
-        if (input.value === '非數值' || input.value === '∞' || input.value === '-∞') {
-          input.value = ''
-          displayOperator.textContent = '@'
-        } else {
-          // 字串轉陣列
-          let str = Array.from(input.value).filter(item=> item != ',')
-          // pop() 會移除陣列最後一個元素並回傳該值
-          // 若直接串接會變成賦予值
-          str.pop()
-          // join() 將陣列轉字串，若傳入空值則接續
-          input.value = str.join('')
-          input.value = input.value.replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",")
-          vm.displayFontSize()
-        }
+      case 'Backspace': vm.backspace()
         break
       case 'NumpadEnter':
       case 'Enter':
