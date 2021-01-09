@@ -18,12 +18,17 @@ const cal = function () {
   this.sum = () => {
     if ( input.value === '' && displayOperator.textContent === '@' ) {
       input.value = 0 
-    } if ( input.value === '' && displayOperator.textContent !== '@' ) {
+    } else if ( input.value === '' && displayOperator.textContent !== '@' ) {
+      return
+    } else if (input.value === '非數值' || input.value === '∞' || input.value === '-∞') {
+      input.value = ''
+      displayOperator.textContent = '@'
       return
     } else {
       storageAry.push( vm.numberStr() )
       input.value = ''
-      vm.display(eval(storageAry.join('')))
+      input.value = vm.otherSum(eval(storageAry.join('')))
+      input.value = input.value.replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",")
     }
     vm.displayFontSize()
     
@@ -33,10 +38,26 @@ const cal = function () {
     displayOperator.textContent = '='
     sumTemp.value = ''
   }
+  // 計算結果判斷
+  this.otherSum = (num) => {
+    if ( isNaN(num) ) {
+      return '非數值'
+    } else if ( num === Infinity) {
+      return '∞'
+    } else if ( num === -Infinity) {
+      return '-∞'
+    } else {
+      return num
+    }
+  }
   
   // 運算子判斷
-  this.arithmetic = ( operator ) =>{
-    if (input.value !== '') {
+  this.arithmetic = ( operator ) => {
+    if (input.value === '非數值' || input.value === '∞' || input.value === '-∞') {
+      displayOperator.textContent = operator
+      input.value = ''
+      return
+    } else if (input.value !== '') {
       // 運算用符號
       switch (operator) {
         case '+' : storageAry.push( vm.numberStr() , '+' )
@@ -52,9 +73,9 @@ const cal = function () {
       displayAry.push( vm.numberStr() , operator )
       sumTemp.value = displayAry.join('')
       displayOperator.textContent = operator
-      // 清空顯示欄
       input.value = ''
     }
+    
   }
   
   // 資料清空
@@ -68,12 +89,12 @@ const cal = function () {
   
   // 欄位顯示
   this.display = ( num ) => {
+    // 1. 若有結果再次按下數字鍵，則清空顯示欄，重新輸入新數字
+    // 2. 不論運算子為 '@' 或 '+-*/' ，現值為 0 ，則變更為按下的數字
     if (displayOperator.textContent === '='){
-      // 若有結果再次按下數字鍵，則清空顯示欄，重新輸入新數字
       displayOperator.textContent = '@'
       input.value = num.toString()  
     } else if ( input.value === '0' ) {
-      // 不論運算子為 '@' 或 '+-*/' ，現值為 0 ，則變更為按下的數字
       if ( num.toString() === '00' || num.toString() !== '.') {
         input.value = num.toString()  
       } else {
@@ -93,7 +114,7 @@ const cal = function () {
     vm.displayFontSize()
   }
   
-  // 小數點判斷
+  // 格式化輸入數字為字串與小數點判斷
   this.numberStr = () => {
     if ( Array.from(input.value)[0] === '.' ) {
       let newArray = Array.from(input.value)
@@ -127,10 +148,16 @@ const cal = function () {
       case 'AC': vm.clean()
         break
       case '⌫': 
-        let str = Array.from( input.value )
-        str.pop()
-        input.value = str.join('')
-        vm.displayFontSize()
+        if (input.value === '非數值' || input.value === '∞' || input.value === '-∞') {
+          input.value = ''
+          displayOperator.textContent = '@'
+        } else {
+          let str = Array.from(input.value).filter(item=> item != ',')
+          str.pop()
+          input.value = str.join('')
+          input.value = input.value.replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",")
+          vm.displayFontSize()
+        }
         break
       case '=': vm.sum()
         break
@@ -178,13 +205,20 @@ const cal = function () {
   this.keydown = ( e ) => {
     switch ( e.code ){
       case 'Backspace':
-        // 字串轉陣列
-        let str = Array.from( input.value )
-        // pop() 會移除陣列最後一個元素並回傳該值
-        // 若直接串接會變成賦予值
-        str.pop()
-        // join() 將陣列轉字串，若傳入空值則接續
-        input.value = str.join('')
+        if (input.value === '非數值' || input.value === '∞' || input.value === '-∞') {
+          input.value = ''
+          displayOperator.textContent = '@'
+        } else {
+          // 字串轉陣列
+          let str = Array.from(input.value).filter(item=> item != ',')
+          // pop() 會移除陣列最後一個元素並回傳該值
+          // 若直接串接會變成賦予值
+          str.pop()
+          // join() 將陣列轉字串，若傳入空值則接續
+          input.value = str.join('')
+          input.value = input.value.replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",")
+          vm.displayFontSize()
+        }
         break
       case 'NumpadEnter':
       case 'Enter':
@@ -200,7 +234,10 @@ const cal = function () {
         break
       case 'KeyC': vm.clean()
         break
-      case 'NumpadDecimal': vm.display('.')
+      case 'NumpadDecimal': 
+        if (Array.from(input.value).indexOf('.') === -1) {
+          vm.display('.') 
+        } 
         break
 
         /* 數字按鍵區 */
